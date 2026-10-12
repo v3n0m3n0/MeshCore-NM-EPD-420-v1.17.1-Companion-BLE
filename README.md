@@ -1,3 +1,12 @@
+# MeshCore-NM-EPD-420 v1.17.1 Companion BLE
+
+> [!TIP]
+> **RockBase NM-EPD-420 (ESP32-S3 + 4.2" B/W E-Paper + SX1262 LoRa)**
+> This fork (`MeshCore-NM-EPD-420 v1.17.1 Companion BLE`) includes verified hardware support, BLE persistent bonding, font diacritics transliteration, and optimized 400×300 E-Paper UI layouts for the RockBase NM-EPD-420.
+> **👉 Read the dedicated technical documentation:** [README_NM_EPD_420.md](README_NM_EPD_420.md)
+
+---
+
 ## About MeshCore
 
 MeshCore is a lightweight, portable C++ library that enables multi-hop packet routing for embedded projects using LoRa and other packet radios. It is designed for developers who want to create resilient, decentralized communication networks that work without the internet.

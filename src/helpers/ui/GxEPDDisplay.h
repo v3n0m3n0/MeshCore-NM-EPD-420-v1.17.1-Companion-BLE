@@ -9,6 +9,9 @@
 #include <GxEPD2_3C.h>
 #include <GxEPD2_4C.h>
 #include <GxEPD2_7C.h>
+#if __has_include(<other/GxEPD2_420_GYE042A87.h>)
+#include <other/GxEPD2_420_GYE042A87.h>
+#endif
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSans18pt7b.h>

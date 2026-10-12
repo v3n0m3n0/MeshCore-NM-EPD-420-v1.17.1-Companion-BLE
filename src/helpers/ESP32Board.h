@@ -34,7 +34,11 @@ public:
   #ifdef PIN_VBAT_READ
     // battery read support
     pinMode(PIN_VBAT_READ, INPUT);
+    #if defined(ESP_ARDUINO_VERSION_VAL) && (ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0))
     adcAttachPin(PIN_VBAT_READ);
+    #elif !defined(ESP_ARDUINO_VERSION_VAL)
+    adcAttachPin(PIN_VBAT_READ);
+    #endif
   #endif
 
   #ifdef P_LORA_TX_LED

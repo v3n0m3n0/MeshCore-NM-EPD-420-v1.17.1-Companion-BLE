@@ -17,22 +17,26 @@ def merge_bin_action(source, target, env):
         "$ESP32_APP_OFFSET",
         source[0].get_abspath(),
     ]
+    actual_images = [env.subst(str(x)) for x in flash_images]
+    quoted_images = [f'"{x}"' if " " in x and not x.startswith('"') else x for x in actual_images]
+    actual_merged_bin = env.subst(merged_bin)
+    quoted_merged_bin = f'"{actual_merged_bin}"'
     merge_cmd = " ".join(
         [
             '"$PYTHONEXE"',
             '"$OBJCOPY"',
             "--chip",
             board_config.get("build.mcu", "esp32"),
-            "merge_bin",
+            "merge-bin",
             "-o",
-            merged_bin,
-            "--flash_mode",
+            quoted_merged_bin,
+            "--flash-mode",
             board_config.get("build.flash_mode", "dio"),
-            "--flash_freq",
+            "--flash-freq",
             "${__get_board_f_flash(__env__)}",
-            "--flash_size",
+            "--flash-size",
             board_config.get("upload.flash_size", "4MB"),
-            *flash_images,
+            *quoted_images,
         ]
     )
     env.Execute(merge_cmd)

@@ -1,5 +1,6 @@
 #include "SerialBLEInterface.h"
 #include "esp_mac.h"
+#include "esp_gap_ble_api.h"
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
@@ -28,9 +29,12 @@ void SerialBLEInterface::begin(const char* prefix, char* name, uint32_t pin_code
   BLEDevice::setSecurityCallbacks(this);
   BLEDevice::setMTU(MAX_FRAME_SIZE);
 
-  BLESecurity  sec;
+  BLESecurity sec;
   sec.setStaticPIN(pin_code);
   sec.setAuthenticationMode(ESP_LE_AUTH_REQ_SC_MITM_BOND);
+  sec.setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
+  sec.setRespEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
+  sec.setKeySize(16);
 
   //BLEDevice::setPower(ESP_PWR_LVL_N8);
 
@@ -44,13 +48,30 @@ void SerialBLEInterface::begin(const char* prefix, char* name, uint32_t pin_code
   // Create a BLE Characteristic
   pTxCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_TX, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
   pTxCharacteristic->setAccessPermissions(ESP_GATT_PERM_READ_ENC_MITM);
-  pTxCharacteristic->addDescriptor(new BLE2902());
+  BLE2902* p2902 = new BLE2902();
+  p2902->setAccessPermissions(ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE_ENC_MITM);
+  pTxCharacteristic->addDescriptor(p2902);
 
   BLECharacteristic * pRxCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_RX, BLECharacteristic::PROPERTY_WRITE);
   pRxCharacteristic->setAccessPermissions(ESP_GATT_PERM_WRITE_ENC_MITM);
   pRxCharacteristic->setCallbacks(this);
 
   pServer->getAdvertising()->addServiceUUID(SERVICE_UUID);
+}
+
+void SerialBLEInterface::clearAllBonds() {
+  int dev_num = esp_ble_get_bond_device_num();
+  if (dev_num > 0) {
+    esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t *)malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
+    if (dev_list) {
+      if (esp_ble_get_bond_device_list(&dev_num, dev_list) == ESP_OK) {
+        for (int i = 0; i < dev_num; i++) {
+          esp_ble_remove_bond_device(dev_list[i].bd_addr);
+        }
+      }
+      free(dev_list);
+    }
+  }
 }
 
 // -------- BLESecurityCallbacks methods

@@ -3,6 +3,10 @@
 #include <Arduino.h> // needed for PlatformIO
 #include <Mesh.h>
 
+#if defined(ESP32)
+#include "esp_gap_ble_api.h"
+#endif
+
 #define CMD_APP_START                 1
 #define CMD_SEND_TXT_MSG              2
 #define CMD_SEND_CHANNEL_TXT_MSG      3
@@ -953,7 +957,9 @@ void MyMesh::begin(bool has_display) {
 #ifdef DISPLAY_CLASS
     if (has_display && BLE_PIN_CODE == 123456) {
       StdRNG rng;
-      _active_ble_pin = rng.nextInt(100000, 999999); // random pin each session
+      _prefs.ble_pin = rng.nextInt(100000, 999999); // generate random pin once
+      savePrefs();                                  // and persist it until factory reset
+      _active_ble_pin = _prefs.ble_pin;
     } else {
       _active_ble_pin = BLE_PIN_CODE; // otherwise static pin
     }
@@ -1918,6 +1924,20 @@ void MyMesh::handleCmdFrame(size_t len) {
       MESH_DEBUG_PRINTLN("Factory reset: disabling serial interface to prevent reconnects (BLE/WiFi)");
       _serial->disable(); // Phone app disconnects before we can send OK frame so it's safe here
     }
+#if defined(ESP32)
+    int dev_num = esp_ble_get_bond_device_num();
+    if (dev_num > 0) {
+      esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t *)malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
+      if (dev_list) {
+        if (esp_ble_get_bond_device_list(&dev_num, dev_list) == ESP_OK) {
+          for (int i = 0; i < dev_num; i++) {
+            esp_ble_remove_bond_device(dev_list[i].bd_addr);
+          }
+        }
+        free(dev_list);
+      }
+    }
+#endif
     bool success = _store->formatFileSystem();
     if (success) {
       writeOKFrame();
@@ -2065,6 +2085,20 @@ void MyMesh::checkCLIRescueCmd() {
         Serial.println("  Error: erase failed");
       }
     } else if (strcmp(cli_command, "erase") == 0) {
+#if defined(ESP32)
+      int dev_num = esp_ble_get_bond_device_num();
+      if (dev_num > 0) {
+        esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t *)malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
+        if (dev_list) {
+          if (esp_ble_get_bond_device_list(&dev_num, dev_list) == ESP_OK) {
+            for (int i = 0; i < dev_num; i++) {
+              esp_ble_remove_bond_device(dev_list[i].bd_addr);
+            }
+          }
+          free(dev_list);
+        }
+      }
+#endif
       bool success = _store->formatFileSystem();
       if (success) {
         Serial.println("  > erase done");

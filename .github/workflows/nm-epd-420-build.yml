@@ -22,6 +22,10 @@ jobs:
       - name: Setup Build Environment
         uses: ./.github/actions/setup-build-environment
 
+      - name: Fix esptool click compatibility
+        run: |
+          pip install "click<8.2.0"
+
       - name: Build Merged Firmware
         run: |
           pio run -e NM_EPD_420_BW_companion_radio_ble -t mergebin

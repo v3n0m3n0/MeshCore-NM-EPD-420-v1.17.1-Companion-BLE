@@ -133,4 +133,4 @@ python -m esptool --port COM15 --before no-reset --after watchdog-reset flash_id
 
 ## License
 
-This project is licensed under the same terms as upstream MeshCore (GPL-3.0 / MIT where applicable). See [`LICENSE`](LICENSE) for full details.
+This project is licensed under the MIT License, consistent with upstream MeshCore. See [`license.txt`](license.txt) for full details.

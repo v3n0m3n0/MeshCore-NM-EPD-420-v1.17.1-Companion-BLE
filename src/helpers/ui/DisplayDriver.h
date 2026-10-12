@@ -51,20 +51,116 @@ public:
     print(str);
   }
   
-  // convert UTF-8 characters to displayable block characters for compatibility
+  // convert UTF-8 characters to readable ASCII characters for compatibility
   virtual void translateUTF8ToBlocks(char* dest, const char* src, size_t dest_size) {
+    if (!dest || dest_size == 0) return;
+    if (!src) {
+      dest[0] = '\0';
+      return;
+    }
+
     size_t j = 0;
-    for (size_t i = 0; src[i] != 0 && j < dest_size - 1; i++) {
+    for (size_t i = 0; src[i] != '\0' && j < dest_size - 1; i++) {
       unsigned char c = (unsigned char)src[i];
-      if (c >= 32 && c <= 126) {
-        dest[j++] = c;  // ASCII printable
-      } else if (c >= 0x80) {
-        dest[j++] = '\xDB';  // CP437 full block █
-        while (src[i+1] && (src[i+1] & 0xC0) == 0x80) 
-          i++;  // skip UTF-8 continuation bytes
+      if (c < 0x80) {
+        if (c >= 32 && c <= 126) {
+          dest[j++] = c;
+        } else if (c == '\n' || c == '\r' || c == '\t') {
+          dest[j++] = c;
+        }
+      } else if (c == 0xC3) {
+        unsigned char c2 = (unsigned char)src[++i];
+        if (!c2) break;
+        switch (c2) {
+          case 0x93: dest[j++] = 'O'; break; // Ó
+          case 0xB3: dest[j++] = 'o'; break; // ó
+          case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: dest[j++] = 'A'; break; // À-Å
+          case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: dest[j++] = 'a'; break; // à-å
+          case 0x86: dest[j++] = 'A'; if (j < dest_size - 1) dest[j++] = 'E'; break; // Æ
+          case 0xA6: dest[j++] = 'a'; if (j < dest_size - 1) dest[j++] = 'e'; break; // æ
+          case 0x87: dest[j++] = 'C'; break; // Ç
+          case 0xA7: dest[j++] = 'c'; break; // ç
+          case 0x88: case 0x89: case 0x8A: case 0x8B: dest[j++] = 'E'; break; // È-Ë
+          case 0xA8: case 0xA9: case 0xAA: case 0xAB: dest[j++] = 'e'; break; // è-ë
+          case 0x8C: case 0x8D: case 0x8E: case 0x8F: dest[j++] = 'I'; break; // Ì-Ï
+          case 0xAC: case 0xAD: case 0xAE: case 0xAF: dest[j++] = 'i'; break; // ì-ï
+          case 0x91: dest[j++] = 'N'; break; // Ñ
+          case 0xB1: dest[j++] = 'n'; break; // ñ
+          case 0x92: case 0x94: case 0x95: case 0x96: case 0x98: dest[j++] = 'O'; break; // Ò,Ô,Õ,Ö,Ø
+          case 0xB2: case 0xB4: case 0xB5: case 0xB6: case 0xB8: dest[j++] = 'o'; break; // ò,ô,õ,ö,ø
+          case 0x99: case 0x9A: case 0x9B: case 0x9C: dest[j++] = 'U'; break; // Ù-Ü
+          case 0xB9: case 0xBA: case 0xBB: case 0xBC: dest[j++] = 'u'; break; // ù-ü
+          case 0x9D: dest[j++] = 'Y'; break; // Ý
+          case 0xBD: case 0xBF: dest[j++] = 'y'; break; // ý,ÿ
+          case 0x9F: dest[j++] = 's'; break; // ß
+          default: dest[j++] = '?'; break;
+        }
+      } else if (c == 0xC4) {
+        unsigned char c2 = (unsigned char)src[++i];
+        if (!c2) break;
+        switch (c2) {
+          case 0x84: dest[j++] = 'A'; break; // Ą
+          case 0x85: dest[j++] = 'a'; break; // ą
+          case 0x86: dest[j++] = 'C'; break; // Ć
+          case 0x87: dest[j++] = 'c'; break; // ć
+          case 0x8C: dest[j++] = 'C'; break; // Č
+          case 0x8D: dest[j++] = 'c'; break; // č
+          case 0x8E: dest[j++] = 'D'; break; // Ď
+          case 0x8F: dest[j++] = 'd'; break; // ď
+          case 0x98: dest[j++] = 'E'; break; // Ę
+          case 0x99: dest[j++] = 'e'; break; // ę
+          case 0x9A: dest[j++] = 'E'; break; // Ě
+          case 0x9B: dest[j++] = 'e'; break; // ě
+          default: dest[j++] = '?'; break;
+        }
+      } else if (c == 0xC5) {
+        unsigned char c2 = (unsigned char)src[++i];
+        if (!c2) break;
+        switch (c2) {
+          case 0x81: dest[j++] = 'L'; break; // Ł
+          case 0x82: dest[j++] = 'l'; break; // ł
+          case 0x83: dest[j++] = 'N'; break; // Ń
+          case 0x84: dest[j++] = 'n'; break; // ń
+          case 0x87: dest[j++] = 'N'; break; // Ň
+          case 0x88: dest[j++] = 'n'; break; // ň
+          case 0x98: dest[j++] = 'R'; break; // Ř
+          case 0x99: dest[j++] = 'r'; break; // ř
+          case 0x9A: dest[j++] = 'S'; break; // Ś
+          case 0x9B: dest[j++] = 's'; break; // ś
+          case 0xA0: dest[j++] = 'S'; break; // Š
+          case 0xA1: dest[j++] = 's'; break; // š
+          case 0xA4: dest[j++] = 'T'; break; // Ť
+          case 0xA5: dest[j++] = 't'; break; // ť
+          case 0xB9: dest[j++] = 'Z'; break; // Ź
+          case 0xBA: dest[j++] = 'z'; break; // ź
+          case 0xBB: dest[j++] = 'Z'; break; // Ż
+          case 0xBC: dest[j++] = 'z'; break; // ż
+          case 0xBD: dest[j++] = 'Z'; break; // Ž
+          case 0xBE: dest[j++] = 'z'; break; // ž
+          default: dest[j++] = '?'; break;
+        }
+      } else if (c == 0xE2) {
+        unsigned char c2 = (unsigned char)src[++i];
+        unsigned char c3 = c2 ? (unsigned char)src[++i] : 0;
+        if (c2 == 0x80) {
+          switch (c3) {
+            case 0x98: case 0x99: case 0x9A: dest[j++] = '\''; break; // ‘ ’ ‚
+            case 0x9C: case 0x9D: case 0x9E: dest[j++] = '"'; break;  // “ ” „
+            case 0x93: case 0x94: dest[j++] = '-'; break;             // – —
+            case 0xA6: dest[j++] = '.'; break;                        // …
+            default: dest[j++] = ' '; break;
+          }
+        } else {
+          dest[j++] = ' ';
+        }
+      } else {
+        dest[j++] = '?';
+        while (src[i+1] && ((unsigned char)src[i+1] & 0xC0) == 0x80) {
+          i++;
+        }
       }
     }
-    dest[j] = 0;
+    dest[j] = '\0';
   }
   
   // draw text with ellipsis if it exceeds max_width

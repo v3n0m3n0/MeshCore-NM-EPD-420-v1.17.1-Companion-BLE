@@ -430,7 +430,7 @@ public:
       } else {
         display.setColor(UIColor::secondary_txt);
         display.drawXbm((display.width() - 32) / 2, 18, power_icon, 32, 32);
-        display.drawTextCentered(display.width() / 2, 64 - 11, "hibernate:" PRESS_LABEL);
+        display.drawTextCentered(display.width() / 2, 64 - 11, "hibernate: " PRESS_LABEL);
       }
     }
     return 5000;   // next render after 5000 ms
@@ -584,6 +584,9 @@ void UITask::begin(DisplayDriver* display, SensorManager* sensors, NodePrefs* no
 
 #if defined(PIN_USER_BTN)
   user_btn.begin();
+#endif
+#if defined(NM_EPD_420_BW)
+  boot_btn.begin();
 #endif
 #if defined(PIN_USER_BTN_ANA)
   analog_btn.begin();
@@ -758,6 +761,20 @@ void UITask::loop() {
   if (ev == BUTTON_EVENT_TRIPLE_CLICK) {
     c = handleTripleClick(KEY_SELECT);
   }
+#elif defined(NM_EPD_420_BW)
+  int boot_ev = boot_btn.check();
+  if (boot_ev == BUTTON_EVENT_CLICK) {
+    c = checkDisplayOn(KEY_NEXT);
+  } else if (boot_ev == BUTTON_EVENT_LONG_PRESS) {
+    c = handleLongPress(KEY_ENTER);
+  } else if (boot_ev == BUTTON_EVENT_DOUBLE_CLICK) {
+    c = handleDoubleClick(KEY_SELECT);
+  }
+
+  int ev = user_btn.check();
+  if (ev == BUTTON_EVENT_CLICK) {
+    c = checkDisplayOn(KEY_PREV);
+  } 
 #elif defined(PIN_USER_BTN)
   int ev = user_btn.check();
   if (ev == BUTTON_EVENT_CLICK) {
